@@ -5,6 +5,9 @@
 #include "harness.h"
 #include "queue.h"
 
+static struct list_head *mergelists(struct list_head *list1,
+                                    struct list_head *list2);
+static struct list_head *msort(struct list_head *head);
 /* Notice: sometimes, Cppcheck would find the potential NULL pointer bugs,
  * but some of them cannot occur. You can suppress them by adding the
  * following line.
@@ -278,4 +281,62 @@ void q_reverse(struct list_head *head)
  * No effect if q is NULL or empty. In addition, if q has only one
  * element, do nothing.
  */
-void q_sort(struct list_head *head) {}
+void q_sort(struct list_head *head)
+{
+    if (!head || list_empty(head) || list_is_singular(head))
+        return;
+
+    head->prev->next = NULL;
+    head->next = msort(head->next);
+
+    struct list_head *prev = head, *node = head->next;
+    while (node) {
+        node->prev = prev;
+        prev = node;
+        node = node->next;
+    }
+    head->prev = prev;
+    prev->next = head;
+}
+
+struct list_head *mergelists(struct list_head *l1, struct list_head *l2)
+{
+    struct list_head *head = NULL;
+    struct list_head **ptr = &head;
+    for (; l1 && l2; ptr = &(*ptr)->next) {
+        element_t *l1_entry = list_entry(l1, element_t, list);
+        element_t *l2_entry = list_entry(l2, element_t, list);
+        // a negative value if s1 is less than s2;
+        if (strcmp(l1_entry->value, l2_entry->value) < 0) {
+            *ptr = l1;
+            l1 = l1->next;
+        } else {
+            *ptr = l2;
+            l2 = l2->next;
+        }
+    }
+
+    *ptr = (struct list_head *) ((uintptr_t) l1 | (uintptr_t) l2);
+    return head;
+}
+
+struct list_head *msort(struct list_head *head)
+{
+    if (!head || !head->next)
+        return head;
+
+    struct list_head *rabbit = head;
+    struct list_head *turtle = head;
+
+    while (rabbit && rabbit->next) {
+        rabbit = rabbit->next->next;
+        turtle = turtle->next;
+    }
+
+    struct list_head *mid = turtle;
+    // divide two list
+    turtle->prev->next = NULL;
+    struct list_head *list1 = msort(head);
+    struct list_head *list2 = msort(mid);
+    return mergelists(list1, list2);
+}

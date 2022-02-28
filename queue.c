@@ -9,6 +9,7 @@
 static struct list_head *mergelists(struct list_head *list1,
                                     struct list_head *list2);
 static struct list_head *msort(struct list_head *head);
+bool alloc_helper(element_t *node, char *s);
 /* Notice: sometimes, Cppcheck would find the potential NULL pointer bugs,
  * but some of them cannot occur. You can suppress them by adding the
  * following line.
@@ -61,22 +62,11 @@ bool q_insert_head(struct list_head *head, char *s)
         return false;
 
     element_t *node = malloc(sizeof(element_t));
-    if (!node)
+    bool is_alloc = alloc_helper(node, s);
+    if (!is_alloc)
         return false;
 
-    INIT_LIST_HEAD(&node->list);
-    int size = sizeof(char) * (strlen(s) + 1);
-    node->value = malloc(size);
-    if (!node->value) {
-        free(node);
-        return false;
-    }
-
-    // strncpy will insert null byte at the end
-    strncpy(node->value, s, size);
-    node->value[size - 1] = '\0';
     list_add(&node->list, head);
-
     return true;
 }
 
@@ -93,19 +83,30 @@ bool q_insert_tail(struct list_head *head, char *s)
         return false;
 
     element_t *node = malloc(sizeof(element_t));
+    bool is_alloc = alloc_helper(node, s);
+    if (!is_alloc)
+        return false;
+
+    list_add_tail(&node->list, head);
+    return true;
+}
+
+bool alloc_helper(element_t *node, char *s)
+{
     if (!node)
         return false;
 
     INIT_LIST_HEAD(&node->list);
-    char *str = strdup(s);
-    if (!str) {
+    int size = sizeof(char) * (strlen(s) + 1);
+    node->value = malloc(size);
+    if (!node->value) {
         free(node);
         return false;
     }
 
-    node->value = str;
-    list_add_tail(&node->list, head);
-
+    // strncpy will insert null byte at the end
+    strncpy(node->value, s, size);
+    node->value[size - 1] = '\0';
     return true;
 }
 

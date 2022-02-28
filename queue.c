@@ -228,18 +228,21 @@ bool q_delete_dup(struct list_head *head)
         return false;
 
     element_t *entry, *s;
-    char *dup;
+    bool dup = false;
     list_for_each_entry_safe (entry, s, head, list) {
         if (entry->list.next != head &&
             strcmp(entry->value,
                    list_entry(entry->list.next, element_t, list)->value) == 0) {
             /* store duplicate value */
-            dup = list_entry(entry->list.next, element_t, list)->value;
+            dup = true;
             list_del(&entry->list);
             q_release_element(entry);
-        } else if (strcmp(dup, entry->value) == 0) {
+        }
+
+        if (dup) {
             list_del(&entry->list);
             q_release_element(entry);
+            dup = false;
         }
     }
     return true;

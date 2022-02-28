@@ -237,9 +237,7 @@ bool q_delete_dup(struct list_head *head)
             dup = true;
             list_del(&entry->list);
             q_release_element(entry);
-        }
-
-        if (dup) {
+        } else if (dup) {
             list_del(&entry->list);
             q_release_element(entry);
             dup = false;
